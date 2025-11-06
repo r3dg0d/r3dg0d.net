@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: bio-site-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    # Add your other environment variables in Render dashboard:
+    # SPOTIFY_CLIENT_ID
+    # SPOTIFY_CLIENT_SECRET
+    # SPOTIFY_REFRESH_TOKEN
+

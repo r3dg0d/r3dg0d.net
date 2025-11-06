@@ -1,0 +1,366 @@
+/* Retro CRT Bio Site Styles */
+
+@font-face {
+    font-family: 'Pixel NES';
+    src: url('data:font/woff2;base64,') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    color: #edeef0;
+    image-rendering: pixelated;
+    text-shadow: 0 0 1px #00ff00, 0 0 2px #00ff00;
+    font-smooth: never;
+    -webkit-font-smoothing: none;
+    background-color: #000;
+    font-family: 'Courier New', monospace;
+    overflow-x: hidden;
+    position: relative;
+    min-height: 100vh;
+    background-image: 
+        radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%),
+        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="10" cy="10" r="1" fill="white" opacity="0.8"/><circle cx="30" cy="20" r="0.5" fill="white" opacity="0.6"/><circle cx="50" cy="15" r="1" fill="white" opacity="0.7"/><circle cx="70" cy="25" r="0.8" fill="white" opacity="0.5"/><circle cx="90" cy="10" r="0.6" fill="white" opacity="0.6"/></svg>');
+    background-size: 100% 100%, 200px 200px;
+}
+
+/* CRT Overlay Effect */
+#overlay {
+    pointer-events: none;
+    z-index: 9999;
+    position: fixed;
+    inset: 0;
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15) 0px,
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+    animation: scanlines 0.1s linear infinite;
+}
+
+#overlay::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: 
+        radial-gradient(
+            ellipse at center,
+            transparent 0%,
+            rgba(0, 0, 0, 0.4) 100%
+        );
+    pointer-events: none;
+    z-index: 9998;
+}
+
+#overlay::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.1) 0px,
+            rgba(0, 0, 0, 0.1) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+    pointer-events: none;
+    z-index: 9998;
+    animation: static-flicker 0.15s steps(4, end) infinite;
+}
+
+@keyframes scanlines {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(4px); }
+}
+
+@keyframes static-flicker {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.2; }
+}
+
+/* Snowfall Effect */
+#snow {
+    z-index: 9997;
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.snowflake {
+    position: absolute;
+    top: -10%;
+    color: white;
+    text-shadow: none;
+    font-family: 'Courier New', monospace;
+    pointer-events: none;
+    user-select: none;
+    will-change: transform;
+}
+
+@keyframes snowfall {
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(110vh) translateX(20px);
+        opacity: 0.3;
+    }
+}
+
+/* Wrapper */
+#wrapper {
+    width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    padding: 20px;
+}
+
+/* Table Layout */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#menutd {
+    vertical-align: baseline;
+    width: 225px;
+    padding-right: 10px;
+}
+
+#maintd {
+    vertical-align: top;
+}
+
+/* Box Styling */
+.box {
+    border: 2px solid #363a3f;
+    border-radius: 2px;
+    margin: 5px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(1px);
+}
+
+/* Music Box */
+#musicbox {
+    margin-top: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+#albumcover {
+    float: left;
+    border: 1px solid #383838;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+#songtext {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+#songname {
+    font-weight: bold;
+    display: block;
+    word-wrap: break-word;
+}
+
+#artist {
+    color: #888;
+    font-size: 0.9em;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+#lastplayed {
+    color: gray;
+    margin-top: 6px;
+    clear: both;
+    font-size: 0.85em;
+}
+
+/* Status Blobs */
+.blob {
+    vertical-align: middle;
+    background: #5dff8a;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    margin-top: -4px;
+    animation: pulse 2s infinite;
+    display: inline-block;
+    transform: scale(1);
+    box-shadow: 0 0 8px #5dff8a;
+}
+
+.inblob {
+    vertical-align: middle;
+    background: #5d5d5d;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    margin-top: -4px;
+    display: inline-block;
+    transform: scale(1);
+    box-shadow: 0 0 4px #5d5d5d;
+}
+
+.inblob.online {
+    background: #5dff8a;
+    box-shadow: 0 0 8px #5dff8a;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.9);
+    }
+}
+
+/* Links */
+a {
+    color: #5dff8a;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #7dffaa;
+}
+
+
+/* Images with CRT Effect */
+img {
+    image-rendering: pixelated;
+    border: 1px solid #363a3f;
+    position: relative;
+    display: block;
+    filter: blur(0.5px);
+}
+
+/* CRT scanlines overlay */
+img::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15) 0px,
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1;
+    animation: scanlines-move 0.1s linear infinite;
+}
+
+/* CRT color tint overlay */
+img::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 255, 0, 0.08);
+    pointer-events: none;
+    z-index: 2;
+    mix-blend-mode: screen;
+}
+
+@keyframes scanlines-move {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(4px);
+    }
+}
+
+/* Blog Styling */
+.blog-post {
+    margin-bottom: 30px;
+}
+
+.blog-post h2 {
+    color: #5dff8a;
+    margin-bottom: 10px;
+}
+
+.blog-content {
+    line-height: 1.6;
+}
+
+.blog-content p {
+    margin-bottom: 15px;
+}
+
+.blog-content ul {
+    margin-top: 10px;
+    margin-bottom: 15px;
+    margin-left: 20px;
+    line-height: 1.8;
+}
+
+.blog-content li {
+    margin-bottom: 8px;
+}
+
+.blog-pagination a {
+    text-decoration: none;
+    color: #5dff8a;
+    transition: all 0.2s;
+}
+
+.blog-pagination a:hover {
+    background-color: rgba(93, 255, 138, 0.1);
+    border-color: #5dff8a;
+}
+
+/* Responsive */
+@media screen and (max-width: 600px) {
+    #wrapper {
+        width: 100%;
+        padding: 10px;
+    }
+    
+    table {
+        display: block;
+    }
+    
+    #menutd, #maintd {
+        display: block;
+        width: 100%;
+    }
+}
+
