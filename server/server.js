@@ -26,7 +26,10 @@ app.set('trust proxy', true);
 
 // Get the directory where server.js is located
 const APP_DIR = __dirname;
-const PUBLIC_DIR = path.join(path.dirname(APP_DIR), 'public');
+const ROOT_DIR = path.dirname(APP_DIR); // Parent of server directory
+const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
+const CSS_DIR = path.join(ROOT_DIR, 'css');
+const JS_DIR = path.join(ROOT_DIR, 'js');
 
 // For cPanel: public_html is typically the web root
 // Try to find public_html relative to node directory
@@ -250,7 +253,7 @@ console.log('   - GET /api/views (get count)');
 console.log('   - GET /api/views/hit (increment count)');
 
 // Serve static files (CSS, JS, images) - AFTER API routes
-// Priority: public_html (if exists) > app directory > public subdirectory
+// Priority: public_html (if exists) > public directory > app directory
 // IMPORTANT: Skip static middleware for API routes
 
 // Option 1: Serve from public_html if it exists (cPanel web root)
@@ -270,7 +273,40 @@ if (fs.existsSync(PUBLIC_HTML_DIR)) {
     });
 }
 
-// Option 2: Serve from app directory (fallback/primary)
+// Option 2: Serve from public directory (primary location for local dev)
+if (fs.existsSync(PUBLIC_DIR)) {
+    console.log(`📁 Serving static files from public: ${PUBLIC_DIR}`);
+    app.use((req, res, next) => {
+        // Skip static middleware for API routes
+        if (req.path.startsWith('/api')) {
+            return next();
+        }
+        express.static(PUBLIC_DIR, {
+            index: false,
+            dotfiles: 'ignore',
+            etag: true,
+            lastModified: true
+        })(req, res, next);
+    });
+}
+
+// Option 3: Serve CSS and JS from root-level directories
+if (fs.existsSync(CSS_DIR)) {
+    app.use('/css', express.static(CSS_DIR, {
+        dotfiles: 'ignore',
+        etag: true,
+        lastModified: true
+    }));
+}
+if (fs.existsSync(JS_DIR)) {
+    app.use('/js', express.static(JS_DIR, {
+        dotfiles: 'ignore',
+        etag: true,
+        lastModified: true
+    }));
+}
+
+// Option 4: Serve from app directory (fallback)
 app.use((req, res, next) => {
     // Skip static middleware for API routes
     if (req.path.startsWith('/api')) {
@@ -284,26 +320,41 @@ app.use((req, res, next) => {
     })(req, res, next);
 });
 
-// Option 3: Serve from public subdirectory if it exists (mounted at /public)
-if (fs.existsSync(PUBLIC_DIR)) {
-    app.use('/public', express.static(PUBLIC_DIR, {
-        dotfiles: 'ignore',
-        etag: true,
-        lastModified: true
-    }));
-}
-
 // Root route - serve index.html
 app.get('/', (req, res) => {
-    // Check public_html first, then app directory
-    const indexPath = fs.existsSync(path.join(PUBLIC_HTML_DIR, 'index.html'))
-        ? path.join(PUBLIC_HTML_DIR, 'index.html')
-        : path.join(APP_DIR, 'index.html');
+    // Check public_html first, then public directory, then app directory
+    let indexPath = null;
+    if (fs.existsSync(path.join(PUBLIC_HTML_DIR, 'index.html'))) {
+        indexPath = path.join(PUBLIC_HTML_DIR, 'index.html');
+    } else if (fs.existsSync(path.join(PUBLIC_DIR, 'index.html'))) {
+        indexPath = path.join(PUBLIC_DIR, 'index.html');
+    } else if (fs.existsSync(path.join(APP_DIR, 'index.html'))) {
+        indexPath = path.join(APP_DIR, 'index.html');
+    }
     
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
+    if (indexPath) {
+        res.sendFile(path.resolve(indexPath));
     } else {
         res.status(404).send('index.html not found');
+    }
+});
+
+// Blog route - serve blog.html
+app.get('/blog', (req, res) => {
+    // Check public_html first, then public directory, then app directory
+    let blogPath = null;
+    if (fs.existsSync(path.join(PUBLIC_HTML_DIR, 'blog.html'))) {
+        blogPath = path.join(PUBLIC_HTML_DIR, 'blog.html');
+    } else if (fs.existsSync(path.join(PUBLIC_DIR, 'blog.html'))) {
+        blogPath = path.join(PUBLIC_DIR, 'blog.html');
+    } else if (fs.existsSync(path.join(APP_DIR, 'blog.html'))) {
+        blogPath = path.join(APP_DIR, 'blog.html');
+    }
+    
+    if (blogPath) {
+        res.sendFile(path.resolve(blogPath));
+    } else {
+        res.status(404).send('blog.html not found');
     }
 });
 
@@ -487,6 +538,235 @@ app.get('/api/spotify/now-playing', async (req, res) => {
     }
 });
 
+// YouTube API configuration
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
+const YOUTUBE_CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || '';
+
+// Helper function to parse RSS XML and extract videos
+function parseYouTubeRSS(xml) {
+    const videos = [];
+    const videoMatches = xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g);
+    
+    for (const match of videoMatches) {
+        const entry = match[1];
+        const titleMatch = entry.match(/<title>(.*?)<\/title>/);
+        const videoIdMatch = entry.match(/<yt:videoId>(.*?)<\/yt:videoId>/);
+        const publishedMatch = entry.match(/<published>(.*?)<\/published>/);
+        const mediaThumbnailMatch = entry.match(/<media:thumbnail url="(.*?)"/);
+        
+        if (videoIdMatch) {
+            const videoId = videoIdMatch[1];
+            let title = titleMatch ? titleMatch[1] : 'Untitled';
+            // Remove CDATA wrapper if present
+            title = title.replace(/<!\[CDATA\[(.*?)\]\]>/, '$1').trim();
+            const published = publishedMatch ? publishedMatch[1] : '';
+            const thumbnail = mediaThumbnailMatch ? mediaThumbnailMatch[1] : '';
+            
+            videos.push({
+                id: videoId,
+                title: title,
+                published: published,
+                thumbnail: thumbnail,
+                url: `https://www.youtube.com/watch?v=${videoId}`
+            });
+        }
+    }
+    
+    return videos;
+}
+
+// Helper function to enrich videos with statistics from YouTube API
+async function enrichVideosWithStats(videos) {
+    if (!YOUTUBE_API_KEY || videos.length === 0) {
+        return videos;
+    }
+    
+    try {
+        const videoIds = videos.map(v => v.id).join(',');
+        const statsResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+            params: {
+                part: 'statistics,snippet',
+                id: videoIds,
+                key: YOUTUBE_API_KEY
+            }
+        });
+        
+        const statsMap = {};
+        if (statsResponse.data.items) {
+            statsResponse.data.items.forEach(item => {
+                statsMap[item.id] = {
+                    viewCount: parseInt(item.statistics.viewCount || '0'),
+                    likeCount: parseInt(item.statistics.likeCount || '0'),
+                    description: item.snippet.description || ''
+                };
+            });
+        }
+        
+        videos.forEach(video => {
+            if (statsMap[video.id]) {
+                video.viewCount = statsMap[video.id].viewCount;
+                video.likeCount = statsMap[video.id].likeCount;
+            }
+        });
+    } catch (err) {
+        console.log('⚠️ Could not fetch video statistics:', err.message);
+    }
+    
+    return videos;
+}
+
+// YouTube API Endpoints
+app.get('/api/youtube/videos', async (req, res) => {
+    console.log('📡 YouTube videos endpoint hit');
+    
+    // Disable caching for this endpoint
+    res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
+    
+    try {
+        // If we have API key, use YouTube Data API directly (more accurate and up-to-date)
+        if (YOUTUBE_API_KEY) {
+            let channelId = YOUTUBE_CHANNEL_ID;
+            
+            // Get channel ID from handle if not provided
+            if (!channelId) {
+                try {
+                    const channelResponse = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+                        params: {
+                            part: 'id,contentDetails',
+                            forHandle: '128bytes8',
+                            key: YOUTUBE_API_KEY
+                        }
+                    });
+                    
+                    if (channelResponse.data.items && channelResponse.data.items.length > 0) {
+                        channelId = channelResponse.data.items[0].id;
+                        console.log('✅ Found channel ID:', channelId);
+                    }
+                } catch (err) {
+                    console.log('⚠️ Could not get channel ID from handle:', err.message);
+                }
+            }
+            
+            // If we have channel ID, get uploads playlist
+            if (channelId && channelId.startsWith('UC')) {
+                try {
+                    // Get channel details including uploads playlist ID
+                    const channelDetails = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+                        params: {
+                            part: 'contentDetails',
+                            id: channelId,
+                            key: YOUTUBE_API_KEY
+                        }
+                    });
+                    
+                    let uploadsPlaylistId = null;
+                    if (channelDetails.data.items && channelDetails.data.items.length > 0) {
+                        uploadsPlaylistId = channelDetails.data.items[0].contentDetails?.relatedPlaylists?.uploads;
+                    }
+                    
+                    if (uploadsPlaylistId) {
+                        // Get videos from uploads playlist
+                        const playlistResponse = await axios.get('https://www.googleapis.com/youtube/v3/playlistItems', {
+                            params: {
+                                part: 'snippet,contentDetails',
+                                playlistId: uploadsPlaylistId,
+                                maxResults: 50,
+                                key: YOUTUBE_API_KEY
+                            }
+                        });
+                        
+                        if (playlistResponse.data.items && playlistResponse.data.items.length > 0) {
+                            // Get video IDs
+                            const videoIds = playlistResponse.data.items
+                                .map(item => item.contentDetails?.videoId)
+                                .filter(id => id);
+                            
+                            if (videoIds.length > 0) {
+                                // Get video details with statistics and status
+                                const videosResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+                                    params: {
+                                        part: 'snippet,statistics,status',
+                                        id: videoIds.join(','),
+                                        key: YOUTUBE_API_KEY
+                                    }
+                                });
+                                
+                                // Filter out deleted, private, or unlisted videos
+                                const videos = videosResponse.data.items
+                                    .filter(item => {
+                                        // Only include public videos that are not deleted
+                                        const status = item.status;
+                                        const isPublic = status.privacyStatus === 'public';
+                                        const isUploaded = status.uploadStatus === 'processed' || status.uploadStatus === 'uploaded';
+                                        return isPublic && isUploaded;
+                                    })
+                                    .map(item => ({
+                                        id: item.id,
+                                        title: item.snippet.title,
+                                        published: item.snippet.publishedAt,
+                                        thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || '',
+                                        url: `https://www.youtube.com/watch?v=${item.id}`,
+                                        viewCount: parseInt(item.statistics.viewCount || '0'),
+                                        likeCount: parseInt(item.statistics.likeCount || '0')
+                                    }));
+                                
+                                console.log(`✅ Fetched ${videos.length} public videos from YouTube Data API (filtered out deleted/private)`);
+                                return res.json({ videos: videos });
+                            }
+                        }
+                    }
+                } catch (apiError) {
+                    console.error('⚠️ YouTube Data API error, falling back to RSS:', apiError.message);
+                }
+            }
+        }
+        
+        // Fallback to RSS feed if API key method fails or no API key
+        let channelId = YOUTUBE_CHANNEL_ID;
+        let rssUrl = '';
+        
+        if (channelId && channelId.startsWith('UC')) {
+            rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+        } else {
+            rssUrl = 'https://www.youtube.com/feeds/videos.xml?channel_id=@128bytes8';
+        }
+        
+        console.log('📡 Fetching RSS feed from:', rssUrl);
+        const rssResponse = await axios.get(rssUrl, {
+            headers: {
+                'Accept': 'application/xml, text/xml',
+                'User-Agent': 'Mozilla/5.0',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        // Parse RSS XML
+        const videos = parseYouTubeRSS(rssResponse.data);
+        
+        if (videos.length === 0) {
+            return res.json({ 
+                videos: [],
+                message: 'No videos found.'
+            });
+        }
+        
+        // Enrich with statistics if we have API key
+        const enrichedVideos = await enrichVideosWithStats(videos);
+        
+        res.json({ videos: enrichedVideos.slice(0, 50) });
+    } catch (error) {
+        console.error('❌ YouTube videos error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({
+            error: 'Failed to fetch YouTube videos',
+            details: error.message
+        });
+    }
+});
+
 app.get('/api/spotify/recently-played', async (req, res) => {
     console.log('📡 Spotify recently-played endpoint hit');
     try {
@@ -550,10 +830,12 @@ app.get('/:page', (req, res, next) => {
         return next();
     }
     
-    // Check public_html first, then app directory
+    // Check public_html first, then public directory, then app directory
     let htmlPath = null;
     if (fs.existsSync(path.join(PUBLIC_HTML_DIR, `${page}.html`))) {
         htmlPath = path.join(PUBLIC_HTML_DIR, `${page}.html`);
+    } else if (fs.existsSync(path.join(PUBLIC_DIR, `${page}.html`))) {
+        htmlPath = path.join(PUBLIC_DIR, `${page}.html`);
     } else if (fs.existsSync(path.join(APP_DIR, `${page}.html`))) {
         htmlPath = path.join(APP_DIR, `${page}.html`);
     }

@@ -202,6 +202,7 @@ function createSnowflakes() {
     }
 }
 
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Create snowflakes

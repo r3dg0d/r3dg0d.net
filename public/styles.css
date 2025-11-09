@@ -128,7 +128,7 @@ body {
     margin: 0 auto;
     position: relative;
     z-index: 1;
-    padding: 20px;
+    padding: 10px 20px 20px 20px;
 }
 
 /* Table Layout */
@@ -155,6 +155,7 @@ table {
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(1px);
+    position: relative;
 }
 
 /* Music Box */
@@ -255,56 +256,15 @@ a:hover {
 }
 
 
-/* Images with CRT Effect */
-img {
-    image-rendering: pixelated;
+/* Images */
+img,
+img[src],
+img[alt],
+.image,
+picture img {
     border: 1px solid #363a3f;
     position: relative;
     display: block;
-    filter: blur(0.5px);
-}
-
-/* CRT scanlines overlay */
-img::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.15) 0px,
-        rgba(0, 0, 0, 0.15) 1px,
-        transparent 1px,
-        transparent 2px
-    );
-    pointer-events: none;
-    z-index: 1;
-    animation: scanlines-move 0.1s linear infinite;
-}
-
-/* CRT color tint overlay */
-img::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 255, 0, 0.08);
-    pointer-events: none;
-    z-index: 2;
-    mix-blend-mode: screen;
-}
-
-@keyframes scanlines-move {
-    0% {
-        transform: translateY(0);
-    }
-    100% {
-        transform: translateY(4px);
-    }
 }
 
 /* Blog Styling */
