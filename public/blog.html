@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#00000f">
+    <meta name="description" content="r3dg0d - Blog">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://r3dg0d.net/blog">
+    <meta property="og:title" content="Blog - r3dg0d">
+    <meta property="og:description" content="Thoughts on AI, transhumanism, and technology">
+    
+    <title>Blog - r3dg0d</title>
+    <link rel="icon" type="image/jpeg" href="/favicon.jpg">
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .blog-container {
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .blog-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .blog-nav {
+            margin-bottom: 1rem;
+        }
+        
+        .blog-nav a {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            transition: color 0.15s ease;
+        }
+        
+        .blog-nav a:hover {
+            color: var(--text-primary);
+        }
+        
+        .blog-title {
+            font-family: var(--font-proggy);
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .blog-subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .blog-posts {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .blog-post {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .blog-post:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+        
+        .blog-post-date {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .blog-post-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            transition: color 0.15s ease;
+        }
+        
+        .blog-post:hover .blog-post-title {
+            color: var(--accent-green);
+        }
+        
+        .blog-post-excerpt {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .blog-post-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .blog-tag {
+            font-size: 0.625rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(93, 255, 138, 0.1);
+            border: 1px solid rgba(93, 255, 138, 0.2);
+            border-radius: 0.25rem;
+            color: var(--accent-green);
+        }
+        
+        .blog-post-full {
+            display: none;
+        }
+        
+        .blog-post.expanded .blog-post-full {
+            display: block;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .blog-post-content {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.8;
+        }
+        
+        .blog-post-content h3 {
+            color: var(--accent-green);
+            font-size: 1rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+        
+        .blog-post-content p {
+            margin-bottom: 1rem;
+        }
+        
+        .blog-post-content ul {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+        
+        .blog-post-content li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .blog-post-content b {
+            color: var(--accent-green);
+        }
+        
+        .blog-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border-color), transparent);
+            margin: 1.5rem 0;
+        }
+        
+        .read-more-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-radius: 0.25rem;
+            font-family: var(--font-mono);
+        }
+        
+        .read-more-btn:hover {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starfield" class="fixed top-0 left-0 w-full h-full pointer-events-none z-0"></canvas>
+    
+    <div class="blog-container relative">
+        <div class="blog-header">
+            <nav class="blog-nav">
+                <a href="/">← back to home</a>
+            </nav>
+            <h1 class="blog-title">blog</h1>
+            <p class="blog-subtitle">thoughts on AI, transhumanism, and technology</p>
+        </div>
+        
+        <div class="blog-posts">
+            <!-- Blog Post 1 -->
+            <article class="blog-post" id="post-1">
+                <div class="blog-post-date">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                        <line x1="16" x2="16" y1="2" y2="6"/>
+                        <line x1="8" x2="8" y1="2" y2="6"/>
+                        <line x1="3" x2="21" y1="10" y2="10"/>
+                    </svg>
+                    December 12, 2025
+                </div>
+                <h2 class="blog-post-title">Transhumanism, BCI's, AGI, and the Future of Unhinged AI</h2>
+                <p class="blog-post-excerpt">
+                    I've been thinking a lot lately about where we're heading as a species, and I wanted to share some of my thoughts on transhumanism, brain-computer interfaces, artificial general intelligence, and how all of this relates to the work we're doing at Unhinged AI.
+                </p>
+                <div class="blog-post-tags">
+                    <span class="blog-tag">AI</span>
+                    <span class="blog-tag">Transhumanism</span>
+                    <span class="blog-tag">BCI</span>
+                    <span class="blog-tag">Unhinged AI</span>
+                </div>
+                
+                <div class="blog-post-full">
+                    <div class="blog-post-content">
+                        <h3>My Belief in Transhumanism</h3>
+                        <p>I'm a firm believer in transhumanist ideologies. The idea that humans can and should evolve beyond our current biological limitations through technology isn't just science fiction to me—it's an inevitability, and frankly, a necessity. People like <b>Peter Thiel</b> are often misunderstood or dismissed, but I think they're actually pretty smart and deserve more credit than they're given.</p>
+                        
+                        <p>The merging of humans with AI and machines isn't a question of "if" anymore—it's a question of "when" and "how." I believe this evolution is necessary for humanity to truly progress.</p>
+                        
+                        <div class="blog-divider"></div>
+                        
+                        <h3>Brain-Computer Interfaces: The Next Frontier</h3>
+                        <p>When I look at companies like <b>Neuralink</b>, <b>Synchron</b>, and <b>Starfish Neurosciences</b>, I see the future of human-computer interaction. These BCI technologies are still in their infancy, but the potential is staggering. Once BCI's become mainstream and proven safe, I'll definitely be getting one.</p>
+                        
+                        <p>Imagine being able to speak fluently in any language instantly. Not through translation apps—but through direct neural interfaces that can read and write to your brain's language centers.</p>
+                        
+                        <div class="blog-divider"></div>
+                        
+                        <h3>The Path to AGI and ASI</h3>
+                        <p>I believe we're on the path to <b>Artificial General Intelligence (AGI)</b>—systems smarter than any single human. And beyond that, potentially <b>Artificial Superintelligence (ASI)</b>—systems smarter than all humans combined.</p>
+                        
+                        <div class="blog-divider"></div>
+                        
+                        <h3>Unhinged AI: Where We're At</h3>
+                        <p>At launch, we're going to be extremely competitive with other uncensored AI alternatives. Our models will be proficient in coding, capable of handling complex technical tasks, and yes—they'll be able to talk like an anonymous 4chan user when that's what you need.</p>
+                        
+                        <p>Follow <a href="https://x.com/unhingedai" target="_blank" style="color: var(--accent-green);">@unhingedai on X</a> to stay updated.</p>
+                    </div>
+                </div>
+                
+                <button class="read-more-btn" onclick="togglePost('post-1')">read more</button>
+            </article>
+            
+            <!-- Blog Post 2 -->
+            <article class="blog-post" id="post-2">
+                <div class="blog-post-date">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                        <line x1="16" x2="16" y1="2" y2="6"/>
+                        <line x1="8" x2="8" y1="2" y2="6"/>
+                        <line x1="3" x2="21" y1="10" y2="10"/>
+                    </svg>
+                    November 22, 2025
+                </div>
+                <h2 class="blog-post-title">Announcing Unhinged AI - My First AI Startup Company</h2>
+                <p class="blog-post-excerpt">
+                    I'm excited to announce the launch of my first AI startup company: Unhinged AI! This is a massive milestone for me personally and represents the culmination of months of planning, research, and development in the AI space.
+                </p>
+                <div class="blog-post-tags">
+                    <span class="blog-tag">AI</span>
+                    <span class="blog-tag">Startup</span>
+                    <span class="blog-tag">Announcement</span>
+                </div>
+                
+                <div class="blog-post-full">
+                    <div class="blog-post-content">
+                        <p>At Unhinged AI, we're focused on creating <b>completely uncensored AI models</b> that can handle just about any task without the restrictive guardrails that limit most other AI systems.</p>
+                        
+                        <div class="blog-divider"></div>
+                        
+                        <h3>What's coming soon:</h3>
+                        <ul>
+                            <li><b>Company website launch</b> - A dedicated site for Unhinged AI</li>
+                            <li><b>UnhingedGPT-1</b> - Our first production-ready uncensored language model</li>
+                            <li><b>UnhingedGPT-1-thinking</b> - An advanced reasoning-focused variant</li>
+                        </ul>
+                        
+                        <p>We plan to ship our website along with these first two models to the public in approximately <b>1-2 months</b> (around January-February 2026).</p>
+                    </div>
+                </div>
+                
+                <button class="read-more-btn" onclick="togglePost('post-2')">read more</button>
+            </article>
+            
+            <!-- Blog Post 3 -->
+            <article class="blog-post" id="post-3">
+                <div class="blog-post-date">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                        <line x1="16" x2="16" y1="2" y2="6"/>
+                        <line x1="8" x2="8" y1="2" y2="6"/>
+                        <line x1="3" x2="21" y1="10" y2="10"/>
+                    </svg>
+                    November 6, 2025
+                </div>
+                <h2 class="blog-post-title">Welcome to my site - First blog post</h2>
+                <p class="blog-post-excerpt">
+                    Welcome to my site! I'm excited to finally have this up and running. This is my personal space on the web where I'll be sharing various things I'm working on and learning about.
+                </p>
+                <div class="blog-post-tags">
+                    <span class="blog-tag">Meta</span>
+                    <span class="blog-tag">Welcome</span>
+                </div>
+                
+                <div class="blog-post-full">
+                    <div class="blog-post-content">
+                        <h3>What to expect:</h3>
+                        <ul>
+                            <li><b>Cool experiments</b> - Various experiments and proof-of-concepts</li>
+                            <li><b>Projects</b> - Updates on projects I'm working on</li>
+                            <li><b>Blog posts</b> covering Linux, Programming, Cybersecurity, OSINT</li>
+                            <li><b>Other stuff</b> - Random thoughts and whatever I find interesting</li>
+                        </ul>
+                        
+                        <p>This site is still a work in progress, so expect things to change and improve over time. Thanks for stopping by!</p>
+                    </div>
+                </div>
+                
+                <button class="read-more-btn" onclick="togglePost('post-3')">read more</button>
+            </article>
+        </div>
+    </div>
+    
+    <script>
+        // Starfield animation
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        function createStars() {
+            stars = [];
+            for (let i = 0; i < 150; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5 + 0.5,
+                    opacity: Math.random() * 0.5 + 0.3,
+                    twinkle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+        
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(star => {
+                star.twinkle += 0.02;
+                const opacity = star.opacity + Math.sin(star.twinkle) * 0.2;
+                
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(1, opacity))})`;
+                ctx.fill();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        resize();
+        createStars();
+        animate();
+        window.addEventListener('resize', () => { resize(); createStars(); });
+        
+        // Toggle post expansion
+        function togglePost(postId) {
+            const post = document.getElementById(postId);
+            const btn = post.querySelector('.read-more-btn');
+            
+            if (post.classList.contains('expanded')) {
+                post.classList.remove('expanded');
+                btn.textContent = 'read more';
+            } else {
+                post.classList.add('expanded');
+                btn.textContent = 'read less';
+            }
+        }
+    </script>
+</body>
+</html>
+

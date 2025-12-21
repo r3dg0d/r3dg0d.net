@@ -1,0 +1,44 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.env
+server/.env
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# View tracking data (contains IPs)
+server/views.json
+server/viewed_ips.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs/
+*.log
+
+# Build outputs
+dist/
+build/
+*.map
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
