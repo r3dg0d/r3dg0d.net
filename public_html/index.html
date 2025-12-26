@@ -33,12 +33,8 @@
             <div class="nav-container flex justify-between p-2 border-b border-zinc-800/30">
                 <div class="flex gap-1">
                     <button class="nav-btn active" data-tab="home">home</button>
-                    <button class="nav-btn" data-tab="projects">projects</button>
-                    <a href="/blog.html" class="nav-btn">blog</a>
-                    <a href="/spotify.html" class="nav-btn">spotify</a>
-                    <a href="/youtube.html" class="nav-btn">youtube</a>
+                    <button class="nav-btn" data-tab="blog">blog</button>
                     <button class="nav-btn" data-tab="contact">contact</button>
-                    <button class="nav-btn" data-tab="socials">socials</button>
                 </div>
                 <button class="nav-help px-2 text-xs text-gray-400 hover:text-white transition-colors" id="help-btn">[?]</button>
             </div>
@@ -50,24 +46,6 @@
                     <div class="mb-6">
                         <h1 class="text-5xl mb-0 font-proggy leading-none glitch-text" data-text="r3dg0d">r3dg0d</h1>
                         <p class="text-gray-400 text-xs leading-none mt-1">full stack developer and CEO of Unhinged AI</p>
-                    </div>
-                    
-                    <!-- Discord Status -->
-                    <div class="discord-status bg-zinc-900/20 rounded border border-zinc-800/30 mb-4 p-2">
-                        <div class="flex items-center gap-2">
-                            <div class="relative flex-shrink-0">
-                                <img src="/favicon.jpg" alt="Profile" class="w-6 h-6 rounded-full" id="discord-avatar">
-                                <div class="status-indicator-wrapper-sm">
-                                    <div class="status-indicator-sm offline" id="status-dot"></div>
-                                </div>
-                            </div>
-                            <div class="flex flex-col flex-1 min-w-0">
-                                <a href="https://discord.com/users/1224137560234655900" target="_blank" rel="noopener noreferrer" class="group text-xs text-gray-200 hover:text-white transition-colors">
-                                    <span class="relative">r3dg0d.net<span class="underline-effect"></span></span>
-                                </a>
-                                <span class="text-xs text-gray-500" id="discord-status-text">Offline</span>
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- View Counter -->
@@ -148,14 +126,98 @@
                     </div>
                 </div>
                 
-                <!-- Projects Tab -->
-                <div id="tab-projects" class="tab-content">
-                    <div class="mb-4">
-                        <h2 class="text-xl font-proggy text-white mb-2">projects</h2>
+                <!-- Blog Tab -->
+                <div id="tab-blog" class="tab-content">
+                    <div class="blog-tab-header mb-4">
+                        <h2 class="text-xl font-proggy text-white mb-1">blog</h2>
+                        <p class="text-xs text-gray-500">thoughts on AI, transhumanism, and technology</p>
                     </div>
                     
-                    <div id="projects-list" class="space-y-3">
-                        <div class="text-xs text-gray-500">Loading projects...</div>
+                    <div class="blog-posts-container space-y-3">
+                        <!-- Blog Post 1 -->
+                        <article class="blog-post-card" data-post="post-1">
+                            <div class="blog-post-header">
+                                <span class="blog-post-date text-xs text-gray-500">December 12, 2025</span>
+                                <h3 class="blog-post-title text-sm font-medium text-gray-200 mt-1">Transhumanism, BCI's, AGI, and the Future of Unhinged AI</h3>
+                                <p class="blog-post-excerpt text-xs text-gray-400 mt-1">I've been thinking a lot lately about where we're heading as a species...</p>
+                                <div class="blog-post-tags mt-2">
+                                    <span class="blog-tag">AI</span>
+                                    <span class="blog-tag">Transhumanism</span>
+                                    <span class="blog-tag">BCI</span>
+                                </div>
+                            </div>
+                            <div class="blog-post-body">
+                                <div class="blog-post-content">
+                                    <h4>My Belief in Transhumanism</h4>
+                                    <p>I'm a firm believer in transhumanist ideologies. The idea that humans can and should evolve beyond our current biological limitations through technology isn't just science fiction to me—it's an inevitability, and frankly, a necessity.</p>
+                                    
+                                    <p>The merging of humans with AI and machines isn't a question of "if" anymore—it's a question of "when" and "how." I believe this evolution is necessary for humanity to truly progress.</p>
+                                    
+                                    <h4>Brain-Computer Interfaces: The Next Frontier</h4>
+                                    <p>When I look at companies like <b>Neuralink</b>, <b>Synchron</b>, and <b>Starfish Neurosciences</b>, I see the future of human-computer interaction. These BCI technologies are still in their infancy, but the potential is staggering.</p>
+                                    
+                                    <h4>The Path to AGI and ASI</h4>
+                                    <p>I believe we're on the path to <b>Artificial General Intelligence (AGI)</b>—systems smarter than any single human. And beyond that, potentially <b>Artificial Superintelligence (ASI)</b>.</p>
+                                    
+                                    <h4>Unhinged AI: Where We're At</h4>
+                                    <p>At launch, we're going to be extremely competitive with other uncensored AI alternatives. Follow <a href="https://x.com/unhingedai" target="_blank" class="text-accent-green">@unhingedai on X</a> to stay updated.</p>
+                                </div>
+                            </div>
+                        </article>
+                        
+                        <!-- Blog Post 2 -->
+                        <article class="blog-post-card" data-post="post-2">
+                            <div class="blog-post-header">
+                                <span class="blog-post-date text-xs text-gray-500">November 22, 2025</span>
+                                <h3 class="blog-post-title text-sm font-medium text-gray-200 mt-1">Announcing Unhinged AI - My First AI Startup Company</h3>
+                                <p class="blog-post-excerpt text-xs text-gray-400 mt-1">I'm excited to announce the launch of my first AI startup company...</p>
+                                <div class="blog-post-tags mt-2">
+                                    <span class="blog-tag">AI</span>
+                                    <span class="blog-tag">Startup</span>
+                                    <span class="blog-tag">Announcement</span>
+                                </div>
+                            </div>
+                            <div class="blog-post-body">
+                                <div class="blog-post-content">
+                                    <p>At Unhinged AI, we're focused on creating <b>completely uncensored AI models</b> that can handle just about any task without the restrictive guardrails that limit most other AI systems.</p>
+                                    
+                                    <h4>What's coming soon:</h4>
+                                    <ul>
+                                        <li><b>Company website launch</b> - A dedicated site for Unhinged AI</li>
+                                        <li><b>UnhingedGPT-1</b> - Our first production-ready uncensored language model</li>
+                                        <li><b>UnhingedGPT-1-thinking</b> - An advanced reasoning-focused variant</li>
+                                    </ul>
+                                    
+                                    <p>We plan to ship our website along with these first two models to the public in approximately <b>1-2 months</b> (around January-February 2026).</p>
+                                </div>
+                            </div>
+                        </article>
+                        
+                        <!-- Blog Post 3 -->
+                        <article class="blog-post-card" data-post="post-3">
+                            <div class="blog-post-header">
+                                <span class="blog-post-date text-xs text-gray-500">November 6, 2025</span>
+                                <h3 class="blog-post-title text-sm font-medium text-gray-200 mt-1">Welcome to my site - First blog post</h3>
+                                <p class="blog-post-excerpt text-xs text-gray-400 mt-1">Welcome to my site! I'm excited to finally have this up and running...</p>
+                                <div class="blog-post-tags mt-2">
+                                    <span class="blog-tag">Meta</span>
+                                    <span class="blog-tag">Welcome</span>
+                                </div>
+                            </div>
+                            <div class="blog-post-body">
+                                <div class="blog-post-content">
+                                    <h4>What to expect:</h4>
+                                    <ul>
+                                        <li><b>Cool experiments</b> - Various experiments and proof-of-concepts</li>
+                                        <li><b>Projects</b> - Updates on projects I'm working on</li>
+                                        <li><b>Blog posts</b> covering Linux, Programming, Cybersecurity, OSINT</li>
+                                        <li><b>Other stuff</b> - Random thoughts and whatever I find interesting</li>
+                                    </ul>
+                                    
+                                    <p>This site is still a work in progress, so expect things to change and improve over time. Thanks for stopping by!</p>
+                                </div>
+                            </div>
+                        </article>
                     </div>
                 </div>
                 
@@ -166,13 +228,6 @@
                     </div>
                     
                     <div class="space-y-3">
-                        <a href="https://discord.com/users/1224137560234655900" target="_blank" rel="noopener noreferrer" class="contact-item flex items-center gap-3 p-2 rounded border border-zinc-800/30 hover:border-zinc-700/30 transition-colors group">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400 group-hover:text-[#5865F2] transition-colors">
-                                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-                            </svg>
-                            <span class="text-xs text-gray-300 group-hover:text-white transition-colors">r3dg0d.net</span>
-                        </a>
-                        
                         <a href="https://t.me/r3dg0d" target="_blank" rel="noopener noreferrer" class="contact-item flex items-center gap-3 p-2 rounded border border-zinc-800/30 hover:border-zinc-700/30 transition-colors group">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400 group-hover:text-[#0088cc] transition-colors">
                                 <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
@@ -187,36 +242,39 @@
                             </svg>
                             <span class="text-xs text-gray-300 group-hover:text-white transition-colors">r3dg0d@cock.li</span>
                         </a>
-                    </div>
-                </div>
-                
-                <!-- Socials Tab -->
-                <div id="tab-socials" class="tab-content">
-                    <div class="mb-4">
-                        <h2 class="text-xl font-proggy text-white mb-4">socials</h2>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <a href="https://github.com/r3dg0d" target="_blank" rel="noopener noreferrer" class="contact-item flex items-center gap-3 p-2 rounded border border-zinc-800/30 hover:border-zinc-700/30 transition-colors group">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400 group-hover:text-white transition-colors">
-                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        
+                        <a href="mailto:thickets@nigge.rs" class="contact-item flex items-center gap-3 p-2 rounded border border-zinc-800/30 hover:border-zinc-700/30 transition-colors group">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 group-hover:text-red-400 transition-colors">
+                                <rect width="20" height="16" x="2" y="4" rx="2"/>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                             </svg>
-                            <span class="text-xs text-gray-300 group-hover:text-white transition-colors">r3dg0d</span>
+                            <span class="text-xs text-gray-300 group-hover:text-white transition-colors">thickets@nigge.rs</span>
                         </a>
                         
-                        <a href="https://x.com/128bytes8" target="_blank" rel="noopener noreferrer" class="contact-item flex items-center gap-3 p-2 rounded border border-zinc-800/30 hover:border-zinc-700/30 transition-colors group">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400 group-hover:text-white transition-colors">
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        <a href="https://smp18.simplex.im/a#MdY4xKtMouRjBSDh6Br-e144cu6uDsAS-1hd_O1N5WM" target="_blank" rel="noopener noreferrer" class="contact-item flex items-center gap-3 p-2 rounded border border-zinc-800/30 hover:border-zinc-700/30 transition-colors group">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 group-hover:text-cyan-400 transition-colors">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                <path d="M13 8H3"/>
+                                <path d="M17 12H3"/>
                             </svg>
-                            <span class="text-xs text-gray-300 group-hover:text-white transition-colors">@128bytes8</span>
+                            <span class="text-xs text-gray-300 group-hover:text-white transition-colors">SimpleX Chat</span>
                         </a>
                         
-                        <a href="https://youtube.com/@128bytes8" target="_blank" rel="noopener noreferrer" class="contact-item flex items-center gap-3 p-2 rounded border border-zinc-800/30 hover:border-zinc-700/30 transition-colors group">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="text-gray-400 group-hover:text-red-500 transition-colors">
-                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                            </svg>
-                            <span class="text-xs text-gray-300 group-hover:text-white transition-colors">@128bytes8</span>
-                        </a>
+                        <div class="pgp-key-section mt-4 p-3 rounded border border-zinc-800/30 bg-zinc-900/20">
+                            <h3 class="text-xs font-medium text-gray-300 mb-2">PGP Public Keys</h3>
+                            <div class="space-y-2">
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">r3dg0d@cock.li</p>
+                                    <div class="pgp-key-display text-xs text-gray-500 font-mono break-all" id="pgp-key-cockli"></div>
+                                    <button class="copy-pgp-btn mt-1 text-xs text-gray-400 hover:text-white transition-colors" data-key="cockli">Copy</button>
+                                </div>
+                                <div class="mt-3">
+                                    <p class="text-xs text-gray-400 mb-1">thickets@nigge.rs</p>
+                                    <div class="pgp-key-display text-xs text-gray-500 font-mono break-all" id="pgp-key-niggers"></div>
+                                    <button class="copy-pgp-btn mt-1 text-xs text-gray-400 hover:text-white transition-colors" data-key="niggers">Copy</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

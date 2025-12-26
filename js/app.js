@@ -5,39 +5,120 @@
 // ============================================
 const CONFIG = {
     apiBaseUrl: '',
-    spotify: {
-        updateInterval: 30000 // 30 seconds
-    },
-    discord: {
-        updateInterval: 60000 // 1 minute
-    },
     views: {
         updateInterval: 30000 // 30 seconds
     }
 };
 
 // ============================================
-// Tab Navigation
+// Tab Navigation with Smooth Animations
 // ============================================
 function initTabs() {
-    const navBtns = document.querySelectorAll('.nav-btn');
+    const navBtns = document.querySelectorAll('.nav-btn[data-tab]');
     const tabContents = document.querySelectorAll('.tab-content');
+    let isAnimating = false;
+    
+    // Initialize: show the active tab
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab) {
+        requestAnimationFrame(() => {
+            activeTab.classList.add('visible');
+        });
+    }
     
     navBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const tabId = btn.dataset.tab;
+            if (!tabId || isAnimating) return;
             
-            // Update buttons
+            const currentActive = document.querySelector('.tab-content.active');
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            
+            // Skip if clicking on already active tab
+            if (currentActive === targetTab) return;
+            
+            isAnimating = true;
+            
+            // Update buttons immediately
             navBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Update content
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-                if (content.id === `tab-${tabId}`) {
-                    content.classList.add('active');
+            // Animate out current tab
+            if (currentActive) {
+                currentActive.classList.add('exiting');
+                currentActive.classList.remove('visible');
+            }
+            
+            // After exit animation, switch tabs
+            setTimeout(() => {
+                // Hide old tab
+                if (currentActive) {
+                    currentActive.classList.remove('active', 'exiting');
+                }
+                
+                // Show new tab
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                    
+                    // Trigger enter animation on next frame
+                    requestAnimationFrame(() => {
+                        targetTab.classList.add('visible');
+                        
+                        // Animation complete
+                        setTimeout(() => {
+                            isAnimating = false;
+                        }, 350);
+                    });
+                } else {
+                    isAnimating = false;
+                }
+            }, 200);
+        });
+    });
+    
+    // Initialize blog post cards
+    initBlogPosts();
+}
+
+// ============================================
+// Blog Post Cards
+// ============================================
+function initBlogPosts() {
+    const blogCards = document.querySelectorAll('.blog-post-card');
+    
+    blogCards.forEach(card => {
+        const header = card.querySelector('.blog-post-header');
+        
+        header?.addEventListener('click', (e) => {
+            // Don't toggle if clicking a link inside the content
+            if (e.target.tagName === 'A') return;
+            
+            const isExpanded = card.classList.contains('expanded');
+            
+            // Close all other cards
+            blogCards.forEach(otherCard => {
+                if (otherCard !== card && otherCard.classList.contains('expanded')) {
+                    otherCard.classList.remove('expanded');
                 }
             });
+            
+            // Toggle current card
+            if (isExpanded) {
+                card.classList.remove('expanded');
+            } else {
+                card.classList.add('expanded');
+                
+                // Scroll the card into view smoothly
+                setTimeout(() => {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            }
+        });
+        
+        // Allow clicking inside expanded content without collapsing
+        const body = card.querySelector('.blog-post-body');
+        body?.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     });
 }
@@ -181,7 +262,8 @@ class Terminal {
 - close: Close the terminal
 - minimize: Minimize the terminal
 - echo [text]: Echo text back
-- snake: Play snake game`);
+- snake: Play snake game
+- pgp [email]: View/copy PGP public key (r3dg0d@cock.li or thickets@nigge.rs)`);
                 break;
                 
             case 'ping':
@@ -219,6 +301,10 @@ class Terminal {
                 window.snakeGame?.show();
                 break;
                 
+            case 'pgp':
+                this.handlePGPCommand(argText);
+                break;
+                
             default:
                 this.addLine(`Command not found: ${command}. Type "help" for available commands.`);
         }
@@ -238,6 +324,67 @@ class Terminal {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    async handlePGPCommand(email) {
+        const emailLower = email.toLowerCase().trim();
+        const parts = emailLower.split(' ');
+        const emailPart = parts[0];
+        const shouldCopy = parts.includes('--copy') || parts.includes('-c');
+        
+        let keyFile = '';
+        let displayEmail = '';
+        
+        if (!emailPart || emailPart === '--copy' || emailPart === '-c') {
+            this.addLine('Usage: pgp [email] [--copy]');
+            this.addLine('Available emails:');
+            this.addLine('  - r3dg0d@cock.li');
+            this.addLine('  - thickets@nigge.rs');
+            return;
+        }
+        
+        if (emailPart === 'r3dg0d@cock.li' || emailPart === 'cock.li' || emailPart === 'cockli') {
+            keyFile = '/pgp-r3dg0d-cock.li.asc';
+            displayEmail = 'r3dg0d@cock.li';
+        } else if (emailPart === 'thickets@nigge.rs' || emailPart === 'nigge.rs' || emailPart === 'niggers') {
+            keyFile = '/pgp-thickets-nigge.rs.asc';
+            displayEmail = 'thickets@nigge.rs';
+        } else {
+            this.addLine(`Unknown email: ${emailPart}`);
+            this.addLine('Available emails: r3dg0d@cock.li, thickets@nigge.rs');
+            return;
+        }
+        
+        try {
+            this.addLine(`Fetching PGP key for ${displayEmail}...`);
+            const response = await fetch(keyFile);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const keyText = await response.text();
+            
+            this.addLine('');
+            this.addLine(`PGP Public Key for ${displayEmail}:`);
+            this.addLine('─'.repeat(50));
+            this.addLine(keyText);
+            this.addLine('─'.repeat(50));
+            
+            if (shouldCopy) {
+                try {
+                    await navigator.clipboard.writeText(keyText);
+                    this.addLine('');
+                    this.addLine('✅ Key copied to clipboard!');
+                } catch (clipError) {
+                    this.addLine('');
+                    this.addLine('⚠️ Could not copy to clipboard. Key displayed above.');
+                }
+            } else {
+                this.addLine('');
+                this.addLine('Tip: Use "pgp [email] --copy" to copy the key to clipboard');
+            }
+        } catch (error) {
+            this.addLine(`Error loading PGP key: ${error.message}`);
+        }
     }
 }
 
@@ -693,7 +840,7 @@ class MusicPlayer {
         this.playlist = [];
         this.currentIndex = 0;
         this.isPlaying = false;
-<<        this._volumeCleanup = null;
+        this._volumeCleanup = null;
         
         this.elements = {
             playBtn: document.getElementById('play-btn'),
@@ -731,18 +878,25 @@ class MusicPlayer {
     async loadPlaylist() {
         try {
             const response = await fetch('/api/music/playlist');
+            const data = await response.json();
+            
             if (response.ok) {
-                const data = await response.json();
                 this.playlist = data.tracks || [];
+                console.log(`🎵 Loaded ${this.playlist.length} tracks`);
+                
                 if (this.playlist.length > 0) {
                     this.loadTrack(0);
                 } else {
-                    this.updateUI({ title: 'No tracks available', artist: '' });
+                    console.warn('⚠️ No tracks found in playlist');
+                    this.updateUI({ title: 'No tracks available', artist: 'Add music files to /music/' });
                 }
+            } else {
+                console.error('❌ Playlist API error:', data.error || data.message);
+                this.updateUI({ title: 'Error loading music', artist: data.message || 'Check server logs' });
             }
         } catch (error) {
-            console.error('Error loading playlist:', error);
-            this.updateUI({ title: 'Error loading music', artist: '' });
+            console.error('❌ Error loading playlist:', error);
+            this.updateUI({ title: 'Error loading music', artist: error.message });
         }
     }
     
@@ -1051,55 +1205,62 @@ class MusicPlayer {
 }
 
 // ============================================
-// Discord Presence
+// PGP Keys
 // ============================================
-async function updateDiscordPresence() {
+async function loadPGPKeys() {
     try {
-        const response = await fetch('/api/discord/presence');
-        if (response.ok) {
-            const data = await response.json();
-            updateDiscordUI(data);
+        // Load r3dg0d@cock.li key
+        const response1 = await fetch('/pgp-r3dg0d-cock.li.asc');
+        if (response1.ok) {
+            const key1 = await response1.text();
+            const keyDisplay1 = document.getElementById('pgp-key-cockli');
+            if (keyDisplay1) {
+                // Show first and last few lines for display
+                const lines = key1.split('\n');
+                const preview = lines.slice(0, 3).join('\n') + '\n...\n' + lines.slice(-3).join('\n');
+                keyDisplay1.textContent = preview;
+                keyDisplay1.dataset.fullKey = key1;
+            }
         }
-    } catch (error) {
-        console.error('Error fetching Discord presence:', error);
-        updateDiscordUI({ status: 'offline' });
-    }
-}
-
-function updateDiscordUI(data) {
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('discord-status-text');
-    const avatar = document.getElementById('discord-avatar');
-    
-    if (statusDot) {
-        // Remove all status classes (both regular and small variants)
-        statusDot.classList.remove('online', 'idle', 'dnd', 'offline');
-        // Add the current status class
-        statusDot.classList.add(data.status || 'offline');
-    }
-    
-    if (statusText) {
-        const statusMap = {
-            'online': 'Online',
-            'idle': 'Away',
-            'dnd': 'Do Not Disturb',
-            'offline': 'Offline'
-        };
-        statusText.textContent = statusMap[data.status] || 'Offline';
         
-        // Add color class based on status
-        statusText.classList.remove('text-green-400', 'text-yellow-400', 'text-red-400', 'text-gray-500');
-        const colorMap = {
-            'online': 'text-green-400',
-            'idle': 'text-yellow-400',
-            'dnd': 'text-red-400',
-            'offline': 'text-gray-500'
-        };
-        statusText.classList.add(colorMap[data.status] || 'text-gray-500');
-    }
-    
-    if (avatar && data.avatar) {
-        avatar.src = data.avatar;
+        // Load thickets@nigge.rs key
+        const response2 = await fetch('/pgp-thickets-nigge.rs.asc');
+        if (response2.ok) {
+            const key2 = await response2.text();
+            const keyDisplay2 = document.getElementById('pgp-key-niggers');
+            if (keyDisplay2) {
+                const lines = key2.split('\n');
+                const preview = lines.slice(0, 3).join('\n') + '\n...\n' + lines.slice(-3).join('\n');
+                keyDisplay2.textContent = preview;
+                keyDisplay2.dataset.fullKey = key2;
+            }
+        }
+        
+        // Add copy button handlers
+        document.querySelectorAll('.copy-pgp-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const keyType = btn.dataset.key;
+                const keyDisplay = document.getElementById(`pgp-key-${keyType}`);
+                if (keyDisplay && keyDisplay.dataset.fullKey) {
+                    try {
+                        await navigator.clipboard.writeText(keyDisplay.dataset.fullKey);
+                        const originalText = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => {
+                            btn.textContent = originalText;
+                        }, 2000);
+                    } catch (error) {
+                        console.error('Failed to copy:', error);
+                        btn.textContent = 'Failed';
+                        setTimeout(() => {
+                            btn.textContent = 'Copy';
+                        }, 2000);
+                    }
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error loading PGP keys:', error);
     }
 }
 
@@ -1137,59 +1298,6 @@ function updateViewCounterUI(count) {
     }
 }
 
-// ============================================
-// Projects
-// ============================================
-async function loadProjects() {
-    const container = document.getElementById('projects-list');
-    if (!container) return;
-    
-    try {
-        const response = await fetch('https://api.github.com/users/r3dg0d/repos?per_page=100&sort=updated');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const repos = await response.json();
-        
-        // Filter and sort
-        const projects = repos
-            .filter(repo => !repo.fork)
-            .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-            .slice(0, 10);
-        
-        if (projects.length === 0) {
-            container.innerHTML = '<div class="text-xs text-gray-500">No projects found.</div>';
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        projects.forEach(repo => {
-            const projectDiv = document.createElement('div');
-            projectDiv.className = 'project-item';
-            
-            const language = repo.language || 'N/A';
-            const stars = repo.stargazers_count || 0;
-            const description = repo.description || 'No description available.';
-            
-            projectDiv.innerHTML = `
-                <h3><a href="${repo.html_url}" target="_blank" rel="noopener noreferrer">${repo.name}</a></h3>
-                <p>${description}</p>
-                <div class="project-meta">
-                    <span class="project-tag">${language}</span>
-                    <span class="project-tag">⭐ ${stars}</span>
-                </div>
-            `;
-            
-            container.appendChild(projectDiv);
-        });
-    } catch (error) {
-        console.error('Error loading projects:', error);
-        container.innerHTML = `<div class="text-xs text-red-400">Error loading projects: ${error.message}</div>`;
-    }
-}
 
 // ============================================
 // Initialize
@@ -1208,19 +1316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateViewCounter();
     setInterval(updateViewCounter, CONFIG.views.updateInterval);
     
-    // Initialize Discord presence
-    updateDiscordPresence();
-    setInterval(updateDiscordPresence, CONFIG.discord.updateInterval);
-    
-    // Load projects when projects tab is viewed
-    const projectsTab = document.querySelector('[data-tab="projects"]');
-    if (projectsTab) {
-        projectsTab.addEventListener('click', () => {
-            const container = document.getElementById('projects-list');
-            if (container && container.children.length === 1 && container.children[0].textContent.includes('Loading')) {
-                loadProjects();
-            }
-        });
-    }
+    // Load PGP keys
+    loadPGPKeys();
 });
 

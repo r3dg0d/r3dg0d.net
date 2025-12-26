@@ -207,25 +207,36 @@ body {
     font-family: var(--font-mono);
 }
 
-/* Tabs */
+/* Tabs with smooth animations */
 .tab-content {
     display: none;
-    animation: tabFadeIn 0.3s ease;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tab-content.active {
     display: block;
 }
 
-@keyframes tabFadeIn {
-    from {
-        opacity: 0;
-        transform: translateX(-5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+.tab-content.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.tab-content.exiting {
+    opacity: 0;
+    transform: translateY(-8px);
+}
+
+/* Card content area smooth height transition */
+.card {
+    transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
+}
+
+.card-content-wrapper {
+    position: relative;
+    overflow: hidden;
 }
 
 /* Glitch Text Effect */
@@ -447,6 +458,174 @@ body {
 .contact-item:hover {
     background-color: rgba(39, 39, 42, 0.1);
     transform: translateX(2px);
+}
+
+/* Blog Tab Styles */
+.blog-tab-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.blog-posts-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.blog-post-card {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blog-post-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.blog-post-card:hover .blog-post-title {
+    color: var(--accent-green);
+}
+
+.blog-post-header {
+    padding: 0.875rem;
+}
+
+.blog-post-title {
+    transition: color 0.2s ease;
+    line-height: 1.4;
+}
+
+.blog-post-excerpt {
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.blog-post-tags {
+    display: flex;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+}
+
+.blog-tag {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.375rem;
+    background: rgba(93, 255, 138, 0.1);
+    border: 1px solid rgba(93, 255, 138, 0.2);
+    border-radius: 0.25rem;
+    color: var(--accent-green);
+    transition: all 0.15s ease;
+}
+
+.blog-post-card:hover .blog-tag {
+    background: rgba(93, 255, 138, 0.15);
+    border-color: rgba(93, 255, 138, 0.3);
+}
+
+.blog-post-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.blog-post-card.expanded .blog-post-body {
+    max-height: 600px;
+    padding: 0 0.875rem 0.875rem;
+    overflow-y: auto;
+}
+
+.blog-post-card.expanded {
+    cursor: default;
+}
+
+.blog-post-content {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    line-height: 1.7;
+}
+
+.blog-post-content h4 {
+    color: var(--accent-green);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.blog-post-content h4:first-child {
+    margin-top: 0;
+}
+
+.blog-post-content p {
+    margin-bottom: 0.75rem;
+}
+
+.blog-post-content ul {
+    margin: 0.75rem 0;
+    padding-left: 1.25rem;
+}
+
+.blog-post-content li {
+    margin-bottom: 0.375rem;
+}
+
+.blog-post-content b {
+    color: var(--accent-green);
+}
+
+.blog-post-content a {
+    color: var(--accent-green);
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+}
+
+.blog-post-content a:hover {
+    opacity: 0.8;
+}
+
+.text-accent-green {
+    color: var(--accent-green);
+}
+
+/* PGP Key Section */
+.pgp-key-section {
+    transition: border-color 0.15s ease;
+}
+
+.pgp-key-display {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    line-height: 1.4;
+    word-break: break-all;
+    max-height: 100px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.copy-pgp-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    transition: color 0.15s ease;
+}
+
+.copy-pgp-btn:hover {
+    color: var(--accent-green);
 }
 
 /* Projects */

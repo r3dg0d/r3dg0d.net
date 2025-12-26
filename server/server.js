@@ -28,7 +28,8 @@ app.set('trust proxy', true);
 // Directory paths
 const APP_DIR = __dirname;
 const ROOT_DIR = path.dirname(APP_DIR);
-const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
+// Use public_html for cPanel deployment
+const PUBLIC_DIR = path.join(ROOT_DIR, 'public_html');
 const JS_DIR = path.join(ROOT_DIR, 'js');
 const MUSIC_DIR = path.join(PUBLIC_DIR, 'music');
 
@@ -36,6 +37,12 @@ const MUSIC_DIR = path.join(PUBLIC_DIR, 'music');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: true, credentials: true }));
+
+// Security headers (suppress Permissions-Policy warnings)
+app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    next();
+});
 
 // Request logging
 app.use((req, res, next) => {
@@ -129,56 +136,13 @@ app.get('/api/views', (req, res) => {
     res.json({ count: viewCount });
 });
 
-// ============================================
-// Discord Presence (Lanyard API)
-// ============================================
-const DISCORD_USER_ID = process.env.DISCORD_USER_ID || '';
-
-app.get('/api/discord/presence', async (req, res) => {
-    try {
-        if (!DISCORD_USER_ID) {
-            return res.json({ status: 'offline', message: 'Discord ID not configured' });
-        }
-        
-        // Use Lanyard API for Discord presence
-        const response = await axios.get(`https://api.lanyard.rest/v1/users/${DISCORD_USER_ID}`, {
-            timeout: 5000
-        });
-        
-        if (response.data.success && response.data.data) {
-            const data = response.data.data;
-            const status = data.discord_status || 'offline';
-            const user = data.discord_user || {};
-            
-            let avatar = '/favicon.jpg';
-            if (user.avatar) {
-                avatar = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`;
-            }
-            
-            res.json({
-                status: status,
-                username: user.username || 'r3dg0d',
-                discriminator: user.discriminator || '0',
-                avatar: avatar,
-                activities: data.activities || [],
-                listening_to_spotify: data.listening_to_spotify || false,
-                spotify: data.spotify || null
-            });
-        } else {
-            res.json({ status: 'offline' });
-        }
-    } catch (error) {
-        console.error('Discord presence error:', error.message);
-        res.json({ status: 'offline', error: error.message });
-    }
-});
 
 // ============================================
 // Music Playlist (from .wav files)
 // ============================================
 const ALBUMARTS_DIR = path.join(PUBLIC_DIR, 'albumarts');
 
-// Helper function to find album art
+// Helper function to find album art (handles special characters)
 function findAlbumArt(nameWithoutExt) {
     if (!fs.existsSync(ALBUMARTS_DIR)) {
         return '/favicon.jpg';
@@ -186,11 +150,39 @@ function findAlbumArt(nameWithoutExt) {
     
     const imageExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
     
-    for (const ext of imageExts) {
-        const artPath = path.join(ALBUMARTS_DIR, nameWithoutExt + ext);
-        if (fs.existsSync(artPath)) {
-            return `/albumarts/${encodeURIComponent(nameWithoutExt + ext)}`;
+    try {
+        // Get all files in albumarts directory
+        const artFiles = fs.readdirSync(ALBUMARTS_DIR, { encoding: 'utf8' });
+        
+        // Try exact match first
+        for (const ext of imageExts) {
+            const targetName = nameWithoutExt + ext;
+            if (artFiles.includes(targetName)) {
+                return `/albumarts/${encodeURIComponent(targetName)}`;
+            }
         }
+        
+        // Try case-insensitive match
+        const nameLower = nameWithoutExt.toLowerCase();
+        for (const artFile of artFiles) {
+            const artNameLower = artFile.toLowerCase();
+            const artNameWithoutExt = artNameLower.replace(/\.(jpg|jpeg|png|webp|gif)$/, '');
+            if (artNameWithoutExt === nameLower) {
+                return `/albumarts/${encodeURIComponent(artFile)}`;
+            }
+        }
+        
+        // Try partial match (in case filename has slight differences)
+        for (const artFile of artFiles) {
+            const artNameLower = artFile.toLowerCase();
+            const artNameWithoutExt = artNameLower.replace(/\.(jpg|jpeg|png|webp|gif)$/, '');
+            // Check if the base name matches (ignoring special character variations)
+            if (artNameWithoutExt.includes(nameLower) || nameLower.includes(artNameWithoutExt)) {
+                return `/albumarts/${encodeURIComponent(artFile)}`;
+            }
+        }
+    } catch (error) {
+        console.error(`Error finding album art for ${nameWithoutExt}:`, error.message);
     }
     
     return '/favicon.jpg';
@@ -198,9 +190,21 @@ function findAlbumArt(nameWithoutExt) {
 
 app.get('/api/music/playlist', (req, res) => {
     try {
+        console.log(`🎵 Checking music directory: ${MUSIC_DIR}`);
+        console.log(`📁 Public directory: ${PUBLIC_DIR}`);
+        console.log(`📁 App directory: ${APP_DIR}`);
+        console.log(`📁 Root directory: ${ROOT_DIR}`);
+        
         if (!fs.existsSync(MUSIC_DIR)) {
-            fs.mkdirSync(MUSIC_DIR, { recursive: true });
-            return res.json({ tracks: [] });
+            console.log(`⚠️ Music directory doesn't exist: ${MUSIC_DIR}`);
+            console.log(`   Attempting to create it...`);
+            try {
+                fs.mkdirSync(MUSIC_DIR, { recursive: true });
+                console.log(`   ✅ Created music directory`);
+            } catch (mkdirError) {
+                console.error(`   ❌ Failed to create directory: ${mkdirError.message}`);
+            }
+            return res.json({ tracks: [], message: 'Music directory not found', path: MUSIC_DIR });
         }
         
         // Ensure albumarts directory exists
@@ -208,36 +212,81 @@ app.get('/api/music/playlist', (req, res) => {
             fs.mkdirSync(ALBUMARTS_DIR, { recursive: true });
         }
         
-        const files = fs.readdirSync(MUSIC_DIR);
+        // Read directory with proper encoding handling
+        const files = fs.readdirSync(MUSIC_DIR, { encoding: 'utf8' });
+        console.log(`📂 Found ${files.length} total files in music directory`);
+        
         const audioFiles = files.filter(file => {
-            const ext = path.extname(file).toLowerCase();
-            return ['.wav', '.mp3', '.ogg', '.flac', '.m4a'].includes(ext);
+            try {
+                const ext = path.extname(file).toLowerCase();
+                const isAudio = ['.wav', '.mp3', '.ogg', '.flac', '.m4a'].includes(ext);
+                if (!isAudio) {
+                    console.log(`   ⚠️ Skipping non-audio file: ${file}`);
+                }
+                return isAudio;
+            } catch (e) {
+                console.error(`   ❌ Error processing file ${file}:`, e.message);
+                return false;
+            }
         });
         
+        console.log(`🎶 Found ${audioFiles.length} audio files`);
+        if (audioFiles.length > 0) {
+            console.log(`   Sample: ${audioFiles[0]}`);
+        }
+        
         const tracks = audioFiles.map((file, index) => {
-            // Parse filename for metadata (format: "Artist - Title.wav" or just "Title.wav")
-            const nameWithoutExt = path.basename(file, path.extname(file));
-            let title = nameWithoutExt;
-            let artist = 'Unknown Artist';
-            
-            if (nameWithoutExt.includes(' - ')) {
-                const parts = nameWithoutExt.split(' - ');
-                artist = parts[0].trim();
-                title = parts.slice(1).join(' - ').trim();
+            try {
+                // Handle special characters in filename
+                // Get filename without extension, preserving special characters
+                const ext = path.extname(file);
+                const nameWithoutExt = file.slice(0, file.length - ext.length);
+                
+                let title = nameWithoutExt;
+                let artist = 'Unknown Artist';
+                
+                // Try to split on " - " (space dash space) for artist - title format
+                // Use a more robust splitting method that handles special characters
+                const dashIndex = nameWithoutExt.indexOf(' - ');
+                if (dashIndex !== -1) {
+                    artist = nameWithoutExt.substring(0, dashIndex).trim();
+                    title = nameWithoutExt.substring(dashIndex + 3).trim();
+                } else {
+                    // Try comma separation (Artist, Title format)
+                    const commaIndex = nameWithoutExt.indexOf(', ');
+                    if (commaIndex !== -1) {
+                        artist = nameWithoutExt.substring(0, commaIndex).trim();
+                        title = nameWithoutExt.substring(commaIndex + 2).trim();
+                    }
+                }
+                
+                // Look for album art in albumarts/ folder (handle special chars in search)
+                const cover = findAlbumArt(nameWithoutExt);
+                
+                // Properly encode the filename for URL
+                const encodedFile = encodeURIComponent(file);
+                
+                return {
+                    id: index,
+                    title: title || nameWithoutExt,
+                    artist: artist || 'Unknown Artist',
+                    url: `/music/${encodedFile}`,
+                    cover: cover,
+                    filename: file // Keep original filename for reference
+                };
+            } catch (error) {
+                console.error(`❌ Error processing track ${file}:`, error.message);
+                // Return a safe fallback
+                return {
+                    id: index,
+                    title: file.replace(/\.[^/.]+$/, ''), // Remove extension
+                    artist: 'Unknown Artist',
+                    url: `/music/${encodeURIComponent(file)}`,
+                    cover: '/favicon.jpg',
+                    filename: file
+                };
             }
-            
-            // Look for album art in albumarts/ folder
-            const cover = findAlbumArt(nameWithoutExt);
-            
-            return {
-                id: index,
-                title: title,
-                artist: artist,
-                url: `/music/${encodeURIComponent(file)}`,
-                cover: cover,
-                filename: file
-            };
-        });
+        }).filter(track => track !== null); // Remove any null entries
         
         // Shuffle playlist
         for (let i = tracks.length - 1; i > 0; i--) {
@@ -245,251 +294,21 @@ app.get('/api/music/playlist', (req, res) => {
             [tracks[i], tracks[j]] = [tracks[j], tracks[i]];
         }
         
+        console.log(`✅ Returning ${tracks.length} tracks`);
         res.json({ tracks: tracks });
     } catch (error) {
-        console.error('Error loading playlist:', error);
-        res.status(500).json({ error: 'Failed to load playlist', tracks: [] });
+        console.error('❌ Error loading playlist:', error);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            error: 'Failed to load playlist', 
+            message: error.message,
+            tracks: [] 
+        });
     }
 });
 
-// ============================================
-// Spotify API
-// ============================================
-const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '';
-const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '';
-const SPOTIFY_REFRESH_TOKEN = process.env.SPOTIFY_REFRESH_TOKEN || '';
 
-let spotifyAccessToken = null;
-let spotifyTokenExpiry = 0;
 
-async function getSpotifyAccessToken() {
-    if (spotifyAccessToken && Date.now() < spotifyTokenExpiry) {
-        return spotifyAccessToken;
-    }
-    
-    if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REFRESH_TOKEN) {
-        throw new Error('Spotify credentials not configured');
-    }
-    
-    try {
-        const response = await axios.post(
-            'https://accounts.spotify.com/api/token',
-            new URLSearchParams({
-                grant_type: 'refresh_token',
-                refresh_token: SPOTIFY_REFRESH_TOKEN,
-            }),
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': `Basic ${Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64')}`,
-                },
-            }
-        );
-        
-        spotifyAccessToken = response.data.access_token;
-        spotifyTokenExpiry = Date.now() + (response.data.expires_in * 1000) - 60000;
-        return spotifyAccessToken;
-    } catch (error) {
-        console.error('Spotify token error:', error.response?.data || error.message);
-        throw error;
-    }
-}
-
-app.get('/api/spotify/now-playing', async (req, res) => {
-    try {
-        if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REFRESH_TOKEN) {
-            return res.status(500).json({ error: 'Spotify not configured' });
-        }
-        
-        const token = await getSpotifyAccessToken();
-        
-        const response = await axios.get('https://api.spotify.com/v1/me/player/currently-playing', {
-            headers: { 'Authorization': `Bearer ${token}` },
-            validateStatus: (status) => status >= 200 && status < 300 || status === 204
-        });
-        
-        if (response.status === 204 || !response.data) {
-            return res.json({ isPlaying: false, item: null });
-        }
-        
-        res.json({
-            isPlaying: response.data.is_playing || false,
-            item: response.data.item,
-            progress_ms: response.data.progress_ms
-        });
-    } catch (error) {
-        console.error('Spotify now-playing error:', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/spotify/recently-played', async (req, res) => {
-    try {
-        if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET || !SPOTIFY_REFRESH_TOKEN) {
-            return res.status(500).json({ error: 'Spotify not configured' });
-        }
-        
-        const token = await getSpotifyAccessToken();
-        const limit = req.query.limit || 20;
-        
-        const response = await axios.get(`https://api.spotify.com/v1/me/player/recently-played?limit=${limit}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        res.json(response.data);
-    } catch (error) {
-        console.error('Spotify recently-played error:', error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// ============================================
-// YouTube API
-// ============================================
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
-const YOUTUBE_CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID || '';
-
-app.get('/api/youtube/videos', async (req, res) => {
-    res.set({
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-    });
-    
-    try {
-        let channelId = YOUTUBE_CHANNEL_ID;
-        
-        // Try to get channel ID from handle if API key is available
-        if (YOUTUBE_API_KEY && !channelId) {
-            try {
-                const channelResponse = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
-                    params: {
-                        part: 'id,contentDetails',
-                        forHandle: '128bytes8',
-                        key: YOUTUBE_API_KEY
-                    }
-                });
-                
-                if (channelResponse.data.items?.length > 0) {
-                    channelId = channelResponse.data.items[0].id;
-                }
-            } catch (err) {
-                console.log('Could not get channel ID from handle');
-            }
-        }
-        
-        // Use YouTube Data API if available
-        if (YOUTUBE_API_KEY && channelId) {
-            try {
-                const channelDetails = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
-                    params: {
-                        part: 'contentDetails',
-                        id: channelId,
-                        key: YOUTUBE_API_KEY
-                    }
-                });
-                
-                const uploadsPlaylistId = channelDetails.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-                
-                if (uploadsPlaylistId) {
-                    const playlistResponse = await axios.get('https://www.googleapis.com/youtube/v3/playlistItems', {
-                        params: {
-                            part: 'snippet,contentDetails',
-                            playlistId: uploadsPlaylistId,
-                            maxResults: 50,
-                            key: YOUTUBE_API_KEY
-                        }
-                    });
-                    
-                    if (playlistResponse.data.items?.length > 0) {
-                        const videoIds = playlistResponse.data.items
-                            .map(item => item.contentDetails?.videoId)
-                            .filter(id => id);
-                        
-                        if (videoIds.length > 0) {
-                            const videosResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-                                params: {
-                                    part: 'snippet,statistics,status',
-                                    id: videoIds.join(','),
-                                    key: YOUTUBE_API_KEY
-                                }
-                            });
-                            
-                            const videos = videosResponse.data.items
-                                .filter(item => {
-                                    const status = item.status;
-                                    return status.privacyStatus === 'public' && 
-                                           (status.uploadStatus === 'processed' || status.uploadStatus === 'uploaded');
-                                })
-                                .map(item => ({
-                                    id: item.id,
-                                    title: item.snippet.title,
-                                    published: item.snippet.publishedAt,
-                                    thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url,
-                                    url: `https://www.youtube.com/watch?v=${item.id}`,
-                                    viewCount: parseInt(item.statistics.viewCount || '0'),
-                                    likeCount: parseInt(item.statistics.likeCount || '0')
-                                }));
-                            
-                            return res.json({ videos });
-                        }
-                    }
-                }
-            } catch (apiError) {
-                console.error('YouTube API error:', apiError.message);
-            }
-        }
-        
-        // Fallback to RSS feed
-        const rssUrl = channelId && channelId.startsWith('UC')
-            ? `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-            : 'https://www.youtube.com/feeds/videos.xml?channel_id=@128bytes8';
-        
-        const rssResponse = await axios.get(rssUrl, {
-            headers: {
-                'Accept': 'application/xml, text/xml',
-                'User-Agent': 'Mozilla/5.0',
-                'Cache-Control': 'no-cache'
-            }
-        });
-        
-        const videos = parseYouTubeRSS(rssResponse.data);
-        res.json({ videos: videos.slice(0, 50) });
-        
-    } catch (error) {
-        console.error('YouTube videos error:', error.message);
-        res.status(500).json({ error: 'Failed to fetch videos', videos: [] });
-    }
-});
-
-function parseYouTubeRSS(xml) {
-    const videos = [];
-    const videoMatches = xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g);
-    
-    for (const match of videoMatches) {
-        const entry = match[1];
-        const titleMatch = entry.match(/<title>(.*?)<\/title>/);
-        const videoIdMatch = entry.match(/<yt:videoId>(.*?)<\/yt:videoId>/);
-        const publishedMatch = entry.match(/<published>(.*?)<\/published>/);
-        const thumbnailMatch = entry.match(/<media:thumbnail url="(.*?)"/);
-        
-        if (videoIdMatch) {
-            const videoId = videoIdMatch[1];
-            let title = titleMatch ? titleMatch[1] : 'Untitled';
-            title = title.replace(/<!\[CDATA\[(.*?)\]\]>/, '$1').trim();
-            
-            videos.push({
-                id: videoId,
-                title: title,
-                published: publishedMatch ? publishedMatch[1] : '',
-                thumbnail: thumbnailMatch ? thumbnailMatch[1] : '',
-                url: `https://www.youtube.com/watch?v=${videoId}`
-            });
-        }
-    }
-    
-    return videos;
-}
 
 // ============================================
 // Static Files & Routes
@@ -503,12 +322,33 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve static files
+// Serve static files (API routes are already defined above, so they take precedence)
 if (fs.existsSync(PUBLIC_DIR)) {
-    app.use(express.static(PUBLIC_DIR, { index: false }));
+    // Serve static files with proper encoding for special characters
+    app.use(express.static(PUBLIC_DIR, { 
+        index: false,
+        dotfiles: 'ignore',
+        setHeaders: (res, path) => {
+            // Ensure proper content-type for audio files
+            if (path.endsWith('.wav')) {
+                res.setHeader('Content-Type', 'audio/wav');
+            } else if (path.endsWith('.mp3')) {
+                res.setHeader('Content-Type', 'audio/mpeg');
+            }
+            // Enable CORS for audio files
+            res.setHeader('Access-Control-Allow-Origin', '*');
+        }
+    }));
 }
+// Serve JS files - check both js directory and public_html/js
 if (fs.existsSync(JS_DIR)) {
     app.use('/js', express.static(JS_DIR));
+} else {
+    // Fallback: serve from public_html/js if js directory doesn't exist at root
+    const publicJsDir = path.join(PUBLIC_DIR, 'js');
+    if (fs.existsSync(publicJsDir)) {
+        app.use('/js', express.static(publicJsDir));
+    }
 }
 
 // HTML Routes
@@ -521,7 +361,7 @@ app.get('/', (req, res) => {
     }
 });
 
-const htmlPages = ['blog', 'spotify', 'youtube', 'projects', 'contact'];
+const htmlPages = ['blog', 'contact'];
 htmlPages.forEach(page => {
     app.get(`/${page}`, (req, res) => {
         const pagePath = path.join(PUBLIC_DIR, `${page}.html`);
@@ -553,10 +393,41 @@ app.get('/api/health', (req, res) => {
         status: 'ok',
         timestamp: new Date().toISOString(),
         viewCount: viewCount,
-        spotify: !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET && SPOTIFY_REFRESH_TOKEN),
-        youtube: !!YOUTUBE_API_KEY,
-        discord: !!DISCORD_USER_ID
+        paths: {
+            appDir: APP_DIR,
+            rootDir: ROOT_DIR,
+            publicDir: PUBLIC_DIR,
+            musicDir: MUSIC_DIR,
+            musicDirExists: fs.existsSync(MUSIC_DIR)
+        }
     });
+});
+
+// Debug endpoint for music directory
+app.get('/api/music/debug', (req, res) => {
+    try {
+        const debug = {
+            appDir: APP_DIR,
+            rootDir: ROOT_DIR,
+            publicDir: PUBLIC_DIR,
+            musicDir: MUSIC_DIR,
+            musicDirExists: fs.existsSync(MUSIC_DIR),
+            publicDirExists: fs.existsSync(PUBLIC_DIR),
+            files: []
+        };
+        
+        if (fs.existsSync(MUSIC_DIR)) {
+            try {
+                debug.files = fs.readdirSync(MUSIC_DIR);
+            } catch (e) {
+                debug.readError = e.message;
+            }
+        }
+        
+        res.json(debug);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // 404 handler
@@ -573,13 +444,23 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 r3dg0d.net Server running on port ${PORT}`);
+    console.log(`📁 App directory: ${APP_DIR}`);
+    console.log(`📁 Root directory: ${ROOT_DIR}`);
     console.log(`📁 Public directory: ${PUBLIC_DIR}`);
     console.log(`🎵 Music directory: ${MUSIC_DIR}`);
+    console.log(`📁 Music directory exists: ${fs.existsSync(MUSIC_DIR)}`);
+    if (fs.existsSync(MUSIC_DIR)) {
+        try {
+            const musicFiles = fs.readdirSync(MUSIC_DIR);
+            console.log(`🎶 Music files found: ${musicFiles.length}`);
+            if (musicFiles.length > 0) {
+                console.log(`   Sample files: ${musicFiles.slice(0, 3).join(', ')}`);
+            }
+        } catch (e) {
+            console.log(`   Error reading music directory: ${e.message}`);
+        }
+    }
     console.log(`📊 View count: ${viewCount} (${viewedIPs.size} unique IPs)`);
-    console.log(`\n🔧 API Configuration:`);
-    console.log(`   Spotify: ${SPOTIFY_CLIENT_ID ? '✅' : '❌'}`);
-    console.log(`   YouTube: ${YOUTUBE_API_KEY ? '✅' : '❌'}`);
-    console.log(`   Discord: ${DISCORD_USER_ID ? '✅' : '❌'}`);
     console.log(`\n🌐 Server ready at http://localhost:${PORT}`);
 });
 
